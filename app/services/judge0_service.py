@@ -10,10 +10,17 @@ class Judge0Service:
             'Content-Type': 'application/json',
         }
         if self.api_key:
-            # Adjust header based on Judge0's authentication method if using an API key
-            # For example, some might use 'X-Auth-Token' or 'Authorization: Bearer <token>'
-            # self.headers['X-RapidAPI-Key'] = self.api_key # Example for RapidAPI hosted Judge0
-            pass # Add appropriate auth header if needed
+            # Adjust header based on Judge0's authentication method if using an API key.
+            # The specific header depends on the Judge0 instance's configuration.
+            # Common examples include 'X-Auth-Token', 'Authorization: Bearer <token>',
+            # or 'X-RapidAPI-Key' if using Judge0 via RapidAPI.
+            # We'll use 'X-RapidAPI-Key' as per the existing comment example.
+            # If your Judge0 instance uses a different auth mechanism, update this line.
+            self.headers['X-RapidAPI-Key'] = self.api_key
+            # Example for another common header:
+            # self.headers['X-Auth-Token'] = self.api_key
+            # Example for Bearer token:
+            # self.headers['Authorization'] = f'Bearer {self.api_key}'
 
     def submit_code(self, source_code: str, language_id: int, stdin: str = None, expected_output: str = None, cpu_time_limit: float = 2.0, memory_limit: int = 128000):
         """

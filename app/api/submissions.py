@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
+from app.services.judge0_service import Judge0Service
 from app import db
 from app.models import Submission, Candidate, Problem # Assuming these models exist
 
@@ -18,27 +19,95 @@ def submit_solution():
     if not problem:
         return jsonify({'message': 'Problem not found'}), 404
 
-    # For now, we'll skip actual code execution and LLM review
-    # These will be implemented in later stages (tasks 1.4 and 1.5)
+    # Map language string to Judge0 language ID
+    # This is a simplified mapping. A more robust solution would be needed for production.
+    language_mapping = {
+        "python": 71,  # Python 3.8.1
+        "javascript": 63, # Node.js 12.14.0
+        "java": 62, # Java OpenJDK 13.0.1
+        "c++": 54, # C++ GCC 9.2.0
+        # Add other common languages and their Judge0 IDs
+    }
+    language_str = data['language'].lower()
+    language_id = language_mapping.get(language_str)
+
+    if language_id is None:
+        return jsonify({'message': f'Unsupported language: {data["language"]}. Supported: {list(language_mapping.keys())}'}), 400
+
+    judge0_service = Judge0Service()
+
+    # TODO: Get stdin and expected_output from the Problem model if available
+    # For now, using None, which Judge0Service handles with defaults or empty values.
+    problem_stdin = None # problem.stdin if hasattr(problem, 'stdin') else None
+    # problem_expected_output = None # problem.expected_output if hasattr(problem, 'expected_output') else None
+
+    submission_token = judge0_service.submit_code(
+        source_code=data['code'],
+        language_id=language_id,
+        stdin=problem_stdin
+        # expected_output=problem_expected_output # Add if test cases have expected output
+    )
+
+    if not submission_token:
+        return jsonify({'message': 'Failed to submit code to execution service.'}), 500
+
+    # Wait for the submission to complete
+    # Timeout and poll interval can be configured in Judge0Service or passed here
+    results = judge0_service.wait_for_submission(submission_token)
+
+    if not results:
+        # Attempt to create submission record even if Judge0 polling failed/timed out, with an error status
+        new_submission = Submission(
+            candidate_id=data['candidate_id'],
+            problem_id=data['problem_id'],
+            language=data['language'],
+            code=data['code'],
+            status="Error during execution or timeout",
+            test_results={'error': 'Failed to retrieve execution results from Judge0.'}
+        )
+        db.session.add(new_submission)
+        db.session.commit()
+        current_app.logger.error(f"Failed to get results for Judge0 token: {submission_token}")
+        return jsonify({'message': 'Code submitted, but failed to retrieve execution results in time.', 'submission_id': new_submission.id}), 500
+
+    # Process results
+    status_description = results.get('status', {}).get('description', 'Unknown Status')
+    stdout = results.get('stdout')
+    stderr = results.get('stderr')
+    compile_output = results.get('compile_output')
+    exec_time = results.get('time')
+    memory_used = results.get('memory')
+
     new_submission = Submission(
         candidate_id=data['candidate_id'],
         problem_id=data['problem_id'],
-        language=data['language'],
+        language=data['language'], # Store original language string
         code=data['code'],
-        # test_results will be populated after code execution
-        # llm_review will be populated after LLM evaluation
+        status=status_description,
+        test_results={
+            'stdout': stdout,
+            'stderr': stderr,
+            'compile_output': compile_output,
+            'time': exec_time,
+            'memory': memory_used,
+            'judge0_status_id': results.get('status', {}).get('id'),
+            'judge0_token': submission_token
+        }
+        # llm_review will be populated later
     )
     db.session.add(new_submission)
     db.session.commit()
 
     return jsonify({
-        'message': 'Submission received successfully. Evaluation pending.',
+        'message': f'Submission processed. Status: {status_description}',
         'submission': {
             'id': new_submission.id,
             'candidate_id': new_submission.candidate_id,
             'problem_id': new_submission.problem_id,
             'language': new_submission.language,
-            'submission_time': new_submission.submission_time.isoformat() # Ensure datetime is serializable
+            'submission_time': new_submission.submission_time.isoformat(),
+            'status': new_submission.status,
+            'test_results': new_submission.test_results
         }
     }), 201
 
