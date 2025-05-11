@@ -1,0 +1,93 @@
+import React, { useState } from 'react';
+import './SubmissionForm.css';
+
+function SubmissionForm() {
+    const [language, setLanguage] = useState('python');
+    const [sourceCode, setSourceCode] = useState('');
+    const [stdin, setStdin] = useState('');
+    const [submissionResult, setSubmissionResult] = useState(null);
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        // TODO: Implement API call to submit code
+        console.log({ language, sourceCode, stdin });
+        // Mock result for now
+        setSubmissionResult({
+            status_description: 'Accepted',
+            time: '123.45',
+            memory: '1024',
+            stdout: 'Hello World!',
+            stderr: '',
+            compile_output: '',
+            error_message: ''
+        });
+        alert('代码已提交 (请查看控制台和结果区域)');
+    };
+
+    return (
+        <div className="submission-form-container">
+            <h1>在线代码评测</h1>
+            <form onSubmit={handleSubmit} id="code-submission-form">
+                <div className="form-group">
+                    <label htmlFor="language">选择语言:</label>
+                    <select id="language" name="language" className="form-control" value={language} onChange={(e) => setLanguage(e.target.value)}>
+                        <option value="python">Python</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="java">Java</option>
+                        <option value="c++">C++</option>
+                        <option value="c">C</option>
+                    </select>
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="source_code">源代码:</label>
+                    <textarea 
+                        id="source_code" 
+                        name="source_code" 
+                        rows="15" 
+                        className="form-control" 
+                        placeholder="在此输入您的代码..." 
+                        value={sourceCode} 
+                        onChange={(e) => setSourceCode(e.target.value)}
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="stdin">标准输入 (可选):</label>
+                    <textarea 
+                        id="stdin" 
+                        name="stdin" 
+                        rows="5" 
+                        className="form-control" 
+                        placeholder="如果您的代码需要输入，请在此处提供..." 
+                        value={stdin} 
+                        onChange={(e) => setStdin(e.target.value)}
+                    />
+                </div>
+
+                <button type="submit" className="btn btn-primary">提交代码</button>
+            </form>
+
+            {submissionResult && (
+                <div id="result-container" style={{ marginTop: '20px' }}>
+                    <h2>评测结果:</h2>
+                    <div id="output-details">
+                        <p><strong>状态:</strong> <span id="status-description">{submissionResult.status_description}</span></p>
+                        <p><strong>时间 (ms):</strong> <span id="time-taken">{submissionResult.time}</span></p>
+                        <p><strong>内存 (KB):</strong> <span id="memory-used">{submissionResult.memory}</span></p>
+                        <p><strong>标准输出:</strong></p>
+                        <pre id="stdout-output">{submissionResult.stdout || '-'}</pre>
+                        <p><strong>标准错误:</strong></p>
+                        <pre id="stderr-output">{submissionResult.stderr || '-'}</pre>
+                        <p><strong>编译输出:</strong></p>
+                        <pre id="compile-output">{submissionResult.compile_output || '-'}</pre>
+                        <p><strong>错误信息:</strong></p>
+                        <pre id="error-message">{submissionResult.error_message || '-'}</pre>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default SubmissionForm;
