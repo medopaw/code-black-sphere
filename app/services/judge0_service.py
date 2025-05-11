@@ -44,7 +44,7 @@ class Judge0Service:
             # Example for Bearer token:
             # self.headers['Authorization'] = f'Bearer {self.api_key}'
 
-    def submit_code(self, source_code: str, language: Union[str, int], stdin: Optional[str] = None, expected_output: Optional[str] = None, cpu_time_limit: float = 2.0, memory_limit: int = 128000) -> Optional[str]:
+    def submit_code(self, source_code: str, language: Union[str, int], stdin: Optional[str] = None, expected_output: Optional[str] = None, cpu_time_limit: Optional[float] = None, memory_limit: Optional[int] = None) -> Optional[str]:
         """
         Submits code to Judge0 for execution.
 
@@ -52,8 +52,8 @@ class Judge0Service:
         :param language: The Judge0 language ID (e.g., 71) or language name (e.g., "python").
         :param stdin: Standard input for the code.
         :param expected_output: Expected standard output (for comparison).
-        :param cpu_time_limit: CPU time limit in seconds.
-        :param memory_limit: Memory limit in kilobytes.
+        :param cpu_time_limit: Optional CPU time limit in seconds. Judge0 uses its default if None.
+        :param memory_limit: Optional memory limit in kilobytes. Judge0 uses its default if None.
         :return: The submission token from Judge0 or None if submission failed.
         """
         actual_language_id: Optional[int] = None
@@ -80,12 +80,17 @@ class Judge0Service:
         payload: Dict[str, Any] = {
             "source_code": source_code,
             "language_id": actual_language_id,
-            "stdin": stdin,
-            "expected_output": expected_output,
-            "cpu_time_limit": cpu_time_limit,
-            "memory_limit": memory_limit, # in kilobytes
             # "callback_url": "YOUR_CALLBACK_URL" # Optional: if you want Judge0 to notify your app
         }
+        if stdin is not None:
+            payload["stdin"] = stdin
+        if expected_output is not None:
+            payload["expected_output"] = expected_output
+        if cpu_time_limit is not None:
+            payload["cpu_time_limit"] = cpu_time_limit
+        if memory_limit is not None:
+            payload["memory_limit"] = memory_limit
+
         try:
             response = requests.post(f"{self.base_url}/submissions?base64_encoded=false&wait=false", json=payload, headers=self.headers, timeout=10)
             response.raise_for_status() # Raise an exception for HTTP errors (4xx or 5xx)

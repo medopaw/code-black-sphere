@@ -41,11 +41,17 @@ def submit_solution():
     problem_stdin = None # problem.stdin if hasattr(problem, 'stdin') else None
     # problem_expected_output = None # problem.expected_output if hasattr(problem, 'expected_output') else None
 
+    # Get optional resource limits from request, or use Judge0Service defaults (which are None, meaning Judge0's defaults)
+    cpu_time_limit = data.get('cpu_time_limit') # Optional: float, in seconds
+    memory_limit = data.get('memory_limit')     # Optional: int, in kilobytes
+
     submission_token = judge0_service.submit_code(
         source_code=data['code'],
-        language_id=language_id,
-        stdin=problem_stdin
+        language=language_id, # Use language_id (integer) here
+        stdin=problem_stdin,
         # expected_output=problem_expected_output # Add if test cases have expected output
+        cpu_time_limit=cpu_time_limit,
+        memory_limit=memory_limit
     )
 
     if not submission_token:
@@ -91,7 +97,9 @@ def submit_solution():
             'time': exec_time,
             'memory': memory_used,
             'judge0_status_id': results.get('status', {}).get('id'),
-            'judge0_token': submission_token
+            'judge0_token': submission_token,
+            'cpu_time_limit_requested': cpu_time_limit, # Store requested limits for reference
+            'memory_limit_requested': memory_limit      # Store requested limits for reference
         }
         # llm_review will be populated later
     )

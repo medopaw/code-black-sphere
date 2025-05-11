@@ -4,13 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>{{ title if title else 'Flask App' }}</title>
-    {# Add any global CSS or JS links here #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {# Add any other global CSS or JS links here #}
 </head>
 <body>
     <div>
-        <a href="{{ url_for('main.hello') }}">Home</a>
-        {# Add other navigation links here, e.g., login, register #}
-        <a href="{{ url_for('auth.register') }}">Register</a>
+        {# Navigation links can be added here if needed in the future #}
     </div>
     <hr>
     {% with messages = get_flashed_messages() %}

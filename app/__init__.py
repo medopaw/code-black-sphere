@@ -16,14 +16,11 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.login' # Specifies the endpoint for the login page
+    # login_manager.login_view = 'auth.login' # Specifies the endpoint for the login page
 
     # Register blueprints here
-    from app.main import bp as main_bp
+    from app.routes.main import main_bp
     app.register_blueprint(main_bp)
-
-    from app.auth import auth_bp
-    app.register_blueprint(auth_bp, url_prefix='/auth')
 
     from app.api.candidates import candidates_bp
     app.register_blueprint(candidates_bp)
@@ -46,9 +43,7 @@ def create_app(config_class=Config):
     from app.api.import_export import import_export_bp
     app.register_blueprint(import_export_bp)
 
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
+
 
     from app.models import Candidate # Import Candidate model for user_loader
     @login_manager.user_loader
