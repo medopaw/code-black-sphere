@@ -9,3 +9,5 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, '..', 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    JUDGE0_API_URL = os.environ.get('JUDGE0_API_URL') or 'http://localhost:2358'
+    JUDGE0_API_KEY = os.environ.get('JUDGE0_API_KEY') # Optional, leave empty if not used

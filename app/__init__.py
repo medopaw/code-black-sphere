@@ -25,6 +25,27 @@ def create_app(config_class=Config):
     from app.auth import auth_bp
     app.register_blueprint(auth_bp, url_prefix='/auth')
 
+    from app.api.candidates import candidates_bp
+    app.register_blueprint(candidates_bp)
+
+    from app.api.problems import problems_bp
+    app.register_blueprint(problems_bp)
+
+    from app.api.test_cases import test_cases_bp
+    app.register_blueprint(test_cases_bp)
+
+    from app.api.submissions import submissions_bp
+    app.register_blueprint(submissions_bp)
+
+    from app.api.tabs import tabs_bp
+    app.register_blueprint(tabs_bp)
+
+    from app.api.settings import settings_bp
+    app.register_blueprint(settings_bp)
+
+    from app.api.import_export import import_export_bp
+    app.register_blueprint(import_export_bp)
+
     @app.route('/hello')
     def hello():
         return 'Hello, World!'

@@ -35,67 +35,68 @@
 
 #### 1.3.1. 候选人管理 API (`/candidates`)
 
--   [ ] 1.3.1.1. `POST /candidates`: 创建新候选人。
--   [ ] 1.3.1.2. `GET /candidates`: 获取所有候选人列表。
--   [ ] 1.3.1.3. `GET /candidates/<id>`: 获取特定候选人信息 (可选，根据需求)。
--   [ ] 1.3.1.4. `PUT /candidates/<id>`: 更新候选人信息 (可选)。
--   [ ] 1.3.1.5. `DELETE /candidates/<id>`: 删除候选人 (可选，注意级联删除相关数据)。
+-   [x] 1.3.1.1. `POST /candidates`: 创建新候选人。
+-   [x] 1.3.1.2. `GET /candidates`: 获取所有候选人列表。
+-   [x] 1.3.1.3. `GET /candidates/<id>`: 获取特定候选人信息 (可选，根据需求)。
+-   [x] 1.3.1.4. `PUT /candidates/<id>`: 更新候选人信息 (可选)。
+-   [x] 1.3.1.5. `DELETE /candidates/<id>`: 删除候选人 (可选，注意级联删除相关数据)。
 
 #### 1.3.2. 题目管理 API (`/problems`)
 
--   [ ] 1.3.2.1. `POST /problems`: 创建新题目 (包括题目描述、LLM Prompt)。
--   [ ] 1.3.2.2. `GET /problems`: 获取所有题目列表 (可包含分页、筛选)。
--   [ ] 1.3.2.3. `GET /problems/<id>`: 获取特定题目详情 (包括其所有测试用例)。
--   [ ] 1.3.2.4. `PUT /problems/<id>`: 更新题目信息。
--   [ ] 1.3.2.5. `DELETE /problems/<id>`: 删除题目 (级联删除关联的测试用例、答题记录等)。
+-   [x] 1.3.2.1. `POST /problems`: 创建新题目 (包括题目描述、LLM Prompt)。
+-   [x] 1.3.2.2. `GET /problems`: 获取所有题目列表 (可包含分页、筛选)。
+-   [x] 1.3.2.3. `GET /problems/<id>`: 获取特定题目详情 (包括其所有测试用例)。
+-   [x] 1.3.2.4. `PUT /problems/<id>`: 更新题目信息。
+-   [x] 1.3.2.5. `DELETE /problems/<id>`: 删除题目 (级联删除关联的测试用例、答题记录等)。
 
 #### 1.3.3. 测试用例管理 API (`/problems/<problem_id>/testcases`)
 
--   [ ] 1.3.3.1. `POST /problems/<problem_id>/testcases`: 为指定题目添加测试用例。
--   [ ] 1.3.3.2. `GET /problems/<problem_id>/testcases`: 获取指定题目的所有测试用例。
--   [ ] 1.3.3.3. `GET /testcases/<id>`: 获取特定测试用例详情。
--   [ ] 1.3.3.4. `PUT /testcases/<id>`: 更新特定测试用例。
--   [ ] 1.3.3.5. `DELETE /testcases/<id>`: 删除特定测试用例。
+-   [x] 1.3.3.1. `POST /problems/<problem_id>/testcases`: 为指定题目添加测试用例。
+-   [x] 1.3.3.2. `GET /problems/<problem_id>/testcases`: 获取指定题目的所有测试用例。
+-   [x] 1.3.3.3. `GET /testcases/<id>`: 获取特定测试用例详情。
+-   [x] 1.3.3.4. `PUT /testcases/<id>`: 更新特定测试用例。
+-   [x] 1.3.3.5. `DELETE /testcases/<id>`: 删除特定测试用例。
 
 #### 1.3.4. 答题提交与评测 API (`/submissions`)
 
--   [ ] 1.3.4.1. `POST /submissions`: 提交代码进行评测。
+-   [ ] 1.3.4.1. `POST /submissions`: 提交代码进行评测。 (基础结构已完成，执行和评估待办)
     -   接收 `candidate_id`, `problem_id`, `language`, `code`。
     -   调用代码执行模块。
     -   保存 `submissions` 记录，包括 `test_results`。
     -   (异步) 调用 LLM API 进行代码评估，更新 `llm_review`。
--   [ ] 1.3.4.2. `GET /submissions`: 获取答题记录列表 (可按候选人、题目筛选)。
--   [ ] 1.3.4.3. `GET /submissions/<id>`: 获取特定答题记录详情。
--   [ ] 1.3.4.4. `GET /submissions/candidate/<candidate_id>/problem/<problem_id>`: 获取特定候选人特定题目的最新或所有提交记录。
+-   [x] 1.3.4.2. `GET /submissions`: 获取答题记录列表 (可按候选人、题目筛选)。
+-   [x] 1.3.4.3. `GET /submissions/<id>`: 获取特定答题记录详情。
+-   [x] 1.3.4.4. `GET /submissions/candidate/<candidate_id>/problem/<problem_id>`: 获取特定候选人特定题目的最新或所有提交记录。
 
 #### 1.3.5. Tab 管理 API (`/candidates/<candidate_id>/tabs`)
 
--   [ ] 1.3.5.1. `POST /candidates/<candidate_id>/tabs`: 为候选人添加新的题目 Tab。
+-   [x] 1.3.5.1. `POST /candidates/<candidate_id>/tabs`: 为候选人添加新的题目 Tab。
     -   接收 `problem_id`。
     -   保存到 `candidate_problem_tabs` 表。
--   [ ] 1.3.5.2. `GET /candidates/<candidate_id>/tabs`: 获取候选人当前打开的所有 Tab (problem_id 列表)。
--   [ ] 1.3.5.3. `DELETE /candidates/<candidate_id>/tabs/<problem_id>`: 移除候选人的某个 Tab。
--   [ ] 1.3.5.4. `PUT /candidates/<candidate_id>/tabs`: 更新候选人 Tab 的顺序 (可选)。
+-   [x] 1.3.5.2. `GET /candidates/<candidate_id>/tabs`: 获取候选人当前打开的所有 Tab (problem_id 列表)。
+-   [x] 1.3.5.3. `DELETE /candidates/<candidate_id>/tabs/<problem_id>`: 移除候选人的某个 Tab。
+-   [x] 1.3.5.4. `PUT /candidates/<candidate_id>/tabs`: 更新候选人 Tab 的顺序 (可选)。
 
 #### 1.3.6. 设置管理 API (`/settings`)
 
--   [ ] 1.3.6.1. `GET /settings`: 获取所有设置项。
--   [ ] 1.3.6.2. `GET /settings/<key>`: 获取特定设置项的值。
--   [ ] 1.3.6.3. `PUT /settings/<key>`: 更新或创建特定设置项的值 (例如 `deepseek_api_key`, `default_problem_id`)。
+-   [x] 1.3.6.1. `GET /settings`: 获取所有设置项。
+-   [x] 1.3.6.2. `GET /settings/<key>`: 获取特定设置项的值。
+-   [x] 1.3.6.3. `PUT /settings/<key>`: 更新或创建特定设置项的值 (例如 `deepseek_api_key`, `default_problem_id`)。
     -   API Key 存储前需要加密。
 
 #### 1.3.7. 题目导入/导出 API
 
--   [ ] 1.3.7.1. `POST /problems/import`: 导入题目数据 (JSON 文件)。
+-   [x] 1.3.7.1. `POST /problems/import`: 导入题目数据 (JSON 文件)。
     -   处理文件上传。
     -   解析 JSON，根据题目名称判断是新增还是覆盖。
--   [ ] 1.3.7.2. `GET /problems/export`: 导出所有题目数据为 JSON 文件。
+-   [x] 1.3.7.2. `GET /problems/export`: 导出所有题目数据为 JSON 文件。
 
 ### 1.4. 代码执行模块
 
--   [ ] 1.4.1. 调研并选择合适的开源判题 Docker 框架 (如 Judge0, Piston API)。
--   [ ] 1.4.2. 学习并集成所选框架的 API。
--   [ ] 1.4.3. 实现代码执行服务，该服务接收代码、语言、输入，并调用判题框架执行。
+-   [x] 1.4.1. 调研并选择合适的开源判题 Docker 框架 (如 Judge0, Piston API)。
+    -   初步调研完成，选择 Judge0 作为判题引擎。
+-   [x] 1.4.2. 学习并集成所选框架的 API。
+-   [ ] 1.4.3. 实现代码执行服务，该服务接收代码、语言、输入，并调用判题框架执行。 (进行中)
     -   [ ] 1.4.3.1. 处理不同语言的执行逻辑 (Python, JavaScript, Java, C++)。
     -   [ ] 1.4.3.2. 安全处理：确保代码在沙箱环境中执行，限制资源 (CPU, 内存, 时间)。
     -   [ ] 1.4.3.3. 捕获标准输出、标准错误、编译错误、运行时错误。
