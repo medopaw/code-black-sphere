@@ -6,30 +6,30 @@
 
 -   [x] 0.1. 确定项目负责人和团队成员（如果适用）。
 -   [x] 0.2. 建立代码仓库 (例如 Git, GitHub/GitLab)。
--   [ ] 0.3. 搭建开发、测试和（可选）生产环境的基本框架。
--   [ ] 0.4. 详细阅读并理解 <mcfile name="DESIGN.md" path="/Users/yourui/Library/CloudStorage/Dropbox/repo/code-black-sphere/DESIGN.md"></mcfile>。
+-   [x] 0.3. 搭建开发、测试和（可选）生产环境的基本框架。
+-   [x] 0.4. 详细阅读并理解 <mcfile name="DESIGN.md" path="/Users/yourui/Library/CloudStorage/Dropbox/repo/code-black-sphere/DESIGN.md"></mcfile>。
 
 ## 1. 后端开发 (Flask)
 
 ### 1.1. 环境搭建与项目初始化
 
 -   [x] 1.1.1. 安装 Python, pip 和 uv
--   [ ] 1.1.2. 使用 uv 创建并激活 Python 虚拟环境。
--   [ ] 1.1.3. 安装 Flask 及其他必要库 (例如 `flask-sqlalchemy`, `flask-migrate`, `python-dotenv` 等)。
--   [ ] 1.1.4. 初始化 Flask 项目结构 (应用工厂模式、蓝图等)。
--   [ ] 1.1.5. 配置数据库连接 (SQLite)。
+-   [x] 1.1.2. 使用 uv 创建并激活 Python 虚拟环境。
+-   [x] 1.1.3. 安装 Flask 及其他必要库 (例如 `flask-sqlalchemy`, `flask-migrate`, `python-dotenv` 等)。
+-   [x] 1.1.4. 初始化 Flask 项目结构 (应用工厂模式、蓝图等)。
+-   [x] 1.1.5. 配置数据库连接 (SQLite)。
 
 ### 1.2. 数据库模型定义与迁移
 
--   [ ] 1.2.1. 根据 <mcfile name="DESIGN.md" path="/Users/yourui/Library/CloudStorage/Dropbox/repo/code-black-sphere/DESIGN.md"></mcfile> 中 4. 数据模型部分，定义 SQLAlchemy 模型：
-    -   [ ] 1.2.1.1. `candidates` 表模型。
-    -   [ ] 1.2.1.2. `problems` 表模型。
-    -   [ ] 1.2.1.3. `test_cases` 表模型。
-    -   [ ] 1.2.1.4. `submissions` 表模型。
-    -   [ ] 1.2.1.5. `candidate_problem_tabs` 表模型。
-    -   [ ] 1.2.1.6. `settings` 表模型。
--   [ ] 1.2.2. 初始化数据库迁移工具 (如 Flask-Migrate)。
--   [ ] 1.2.3. 生成并应用初始数据库迁移。
+-   [x] 1.2.1. 根据 <mcfile name="DESIGN.md" path="/Users/yourui/Library/CloudStorage/Dropbox/repo/code-black-sphere/DESIGN.md"></mcfile> 中 4. 数据模型部分，定义 SQLAlchemy 模型：
+    -   [x] 1.2.1.1. `candidates` 表模型。
+    -   [x] 1.2.1.2. `problems` 表模型。
+    -   [x] 1.2.1.3. `test_cases` 表模型。
+    -   [x] 1.2.1.4. `submissions` 表模型。
+    -   [x] 1.2.1.5. `candidate_problem_tabs` 表模型。
+    -   [x] 1.2.1.6. `settings` 表模型。
+-   [x] 1.2.2. 初始化数据库迁移工具 (如 Flask-Migrate)。
+-   [x] 1.2.3. 生成并应用初始数据库迁移。
 
 ### 1.3. API 接口开发 (RESTful)
 

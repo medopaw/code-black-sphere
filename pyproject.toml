@@ -1,0 +1,15 @@
+[project]
+name = "code-black-sphere"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12.1"
+dependencies = [
+    "Flask",
+    "Flask-SQLAlchemy",
+    "Flask-Migrate",
+    "python-dotenv",
+    "psycopg2-binary",
+    "Flask-WTF",
+    "Flask-Login"
+]
