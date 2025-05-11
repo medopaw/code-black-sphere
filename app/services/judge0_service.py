@@ -1,6 +1,28 @@
 import requests
 import time
 from flask import current_app
+from typing import Union, Dict, Any, Optional, List # Added Union, Dict, Any, Optional, List
+
+# Default Judge0 Language IDs. It's recommended to fetch these dynamically using get_languages()
+# for the specific Judge0 instance if possible, as IDs can vary.
+# These are common IDs, ensure they match your Judge0 instance configuration.
+# Python, JavaScript, Java, C++ as per PLAN.md 1.4.3.1
+LANGUAGE_NAME_TO_ID_MAP: Dict[str, int] = {
+    "python": 71,        # Python (3.8.0)
+    "python3": 71,       # Alias for Python 3
+    "javascript": 63,    # JavaScript (Node.js 12.14.0)
+    "node.js": 63,       # Alias for JavaScript
+    "java": 62,          # Java (OpenJDK 13.0.1)
+    "c++": 54,           # C++ (GCC 9.2.0)
+    "cpp": 54,           # Alias for C++
+    "c": 50,             # C (GCC 9.2.0)
+    # Add more languages and their corresponding Judge0 IDs as needed
+    # From https://github.com/judge0/judge0 (Judge0 CE v1.13.1 list)
+    # "python": 38, # Python (3.8.1)
+    # "javascript_node": 26, # JavaScript (Node.js 12.14.0)
+    # "java_openjdk_13": 25, # Java (OpenJDK 13.0.1)
+    # "cpp_gcc_9": 12, # C++ (GCC 9.2.0)
+}
 
 class Judge0Service:
     def __init__(self):
@@ -22,21 +44,42 @@ class Judge0Service:
             # Example for Bearer token:
             # self.headers['Authorization'] = f'Bearer {self.api_key}'
 
-    def submit_code(self, source_code: str, language_id: int, stdin: str = None, expected_output: str = None, cpu_time_limit: float = 2.0, memory_limit: int = 128000):
+    def submit_code(self, source_code: str, language: Union[str, int], stdin: Optional[str] = None, expected_output: Optional[str] = None, cpu_time_limit: float = 2.0, memory_limit: int = 128000) -> Optional[str]:
         """
         Submits code to Judge0 for execution.
 
         :param source_code: The source code to execute.
-        :param language_id: The Judge0 language ID (e.g., 71 for Python 3.8).
+        :param language: The Judge0 language ID (e.g., 71) or language name (e.g., "python").
         :param stdin: Standard input for the code.
         :param expected_output: Expected standard output (for comparison).
         :param cpu_time_limit: CPU time limit in seconds.
         :param memory_limit: Memory limit in kilobytes.
         :return: The submission token from Judge0 or None if submission failed.
         """
-        payload = {
+        actual_language_id: Optional[int] = None
+        if isinstance(language, int):
+            actual_language_id = language
+        elif isinstance(language, str):
+            actual_language_id = LANGUAGE_NAME_TO_ID_MAP.get(language.lower())
+            if actual_language_id is None:
+                current_app.logger.error(f"Unsupported language name: {language}. Please use a valid language ID or a mapped name.")
+                # Optionally, try to fetch all languages and find a match
+                # all_langs = self.get_languages()
+                # if all_langs:
+                #     found_lang = next((l.get('id') for l in all_langs if language.lower() in l.get('name', '').lower()), None)
+                #     if found_lang:
+                #         actual_language_id = found_lang
+                #     else:
+                #         return None
+                # else:
+                return None
+        else:
+            current_app.logger.error(f"Invalid language type: {type(language)}. Must be str or int.")
+            return None
+
+        payload: Dict[str, Any] = {
             "source_code": source_code,
-            "language_id": language_id,
+            "language_id": actual_language_id,
             "stdin": stdin,
             "expected_output": expected_output,
             "cpu_time_limit": cpu_time_limit,
@@ -51,7 +94,7 @@ class Judge0Service:
             current_app.logger.error(f"Judge0 submission failed: {e}")
             return None
 
-    def get_submission_details(self, token: str):
+    def get_submission_details(self, token: str): # -> Optional[Dict[str, Any]] type hint can be added
         """
         Retrieves the details of a submission from Judge0 using its token.
 
@@ -68,7 +111,7 @@ class Judge0Service:
             current_app.logger.error(f"Judge0 get submission details failed for token {token}: {e}")
             return None
 
-    def get_languages(self):
+    def get_languages(self): # -> Optional[List[Dict[str, Any]]] type hint can be added
         """
         Retrieves the list of supported languages from Judge0.
 
@@ -82,7 +125,7 @@ class Judge0Service:
             current_app.logger.error(f"Judge0 get languages failed: {e}")
             return None
 
-    def get_system_info(self):
+    def get_system_info(self): # -> Optional[Dict[str, Any]] type hint can be added
         """
         Retrieves system information from Judge0 (version, etc.).
 
@@ -96,7 +139,7 @@ class Judge0Service:
             current_app.logger.error(f"Judge0 get system info failed: {e}")
             return None
 
-    def get_about_info(self):
+    def get_about_info(self): # -> Optional[Dict[str, Any]] type hint can be added
         """
         Retrieves about information from Judge0.
 
@@ -110,7 +153,7 @@ class Judge0Service:
             current_app.logger.error(f"Judge0 get about info failed: {e}")
             return None
 
-    def wait_for_submission(self, token: str, timeout_seconds: int = 60, poll_interval: int = 1):
+    def wait_for_submission(self, token: str, timeout_seconds: int = 60, poll_interval: int = 1): # -> Optional[Dict[str, Any]]
         """
         Waits for a Judge0 submission to complete by polling its status.
 
@@ -146,7 +189,8 @@ if __name__ == '__main__':
         def __init__(self):
             self.config = {
                 'JUDGE0_API_URL': 'http://localhost:2358', # Replace with your Judge0 URL
-                'JUDGE0_API_KEY': None # Add your API key if Judge0 is secured
+                'JUDGE0_API_KEY': None, # Add your API key if Judge0 is secured
+                'LOGGER_NAME': 'mock_logger' # Added for consistency if logger uses app.name
             }
             self.logger = MockLogger()
 
@@ -167,43 +211,60 @@ if __name__ == '__main__':
     languages = judge0_service.get_languages()
     if languages:
         print(f"Supported languages (first 5): {languages[:5]}")
-        python_lang = next((lang for lang in languages if 'python' in lang['name'].lower() and '3' in lang['name']), None)
-        if python_lang:
-            print(f"Found Python 3: ID {python_lang['id']}, Name: {python_lang['name']}")
-            python_lang_id = python_lang['id']
+        # Example: Find Python language ID dynamically (more robust)
+        # python_lang_dynamic = next((lang for lang in languages if 'python' in lang.get('name', '').lower() and '3.8' in lang.get('name', '')), None)
+        # if python_lang_dynamic:
+        #     python_lang_id_dynamic = python_lang_dynamic['id']
+        #     print(f"Dynamically found Python 3.8: ID {python_lang_id_dynamic}, Name: {python_lang_dynamic['name']}")
+        # else:
+        #     print("Python 3.8 not found dynamically, using mapped ID.")
 
-            # 2. Submit code
-            sample_code = "print(input())"
-            sample_stdin = "Hello Judge0"
-            print(f"\nSubmitting Python code: {sample_code} with stdin: {sample_stdin}")
-            submission_token = judge0_service.submit_code(source_code=sample_code, language_id=python_lang_id, stdin=sample_stdin)
+        # 2. Submit code using language name
+        sample_code_python = "print(input())"
+        sample_stdin_python = "Hello Python from Judge0"
+        print(f"\nSubmitting Python code using name 'python': {sample_code_python} with stdin: {sample_stdin_python}")
+        submission_token_python = judge0_service.submit_code(source_code=sample_code_python, language="python", stdin=sample_stdin_python)
 
-            if submission_token:
-                print(f"Submission successful. Token: {submission_token}")
-
-                # 3. Wait for submission to complete and get details
-                print("Waiting for submission to complete...")
-                submission_details = judge0_service.wait_for_submission(submission_token)
-
-                if submission_details:
-                    print("\nSubmission details:")
-                    print(f"  Status: {submission_details.get('status', {}).get('description')}")
-                    print(f"  Time: {submission_details.get('time')}s")
-                    print(f"  Memory: {submission_details.get('memory')}KB")
-                    print(f"  Stdout: {submission_details.get('stdout')}")
-                    print(f"  Stderr: {submission_details.get('stderr')}")
-                    print(f"  Compile Output: {submission_details.get('compile_output')}")
-                    print(f"  Message: {submission_details.get('message')}")
-                else:
-                    print("Failed to retrieve submission details or timed out.")
+        if submission_token_python:
+            print(f"Python submission successful. Token: {submission_token_python}")
+            print("Waiting for Python submission to complete...")
+            submission_details_python = judge0_service.wait_for_submission(submission_token_python)
+            if submission_details_python:
+                print("\nPython submission details:")
+                print(f"  Status: {submission_details_python.get('status', {}).get('description')}")
+                print(f"  Stdout: {submission_details_python.get('stdout')}")
             else:
-                print("Code submission failed.")
+                print("Failed to retrieve Python submission details or timed out.")
         else:
-            print("Python 3 language not found in Judge0 languages.")
-    else:
-        print("Failed to fetch languages from Judge0.")
+            print("Python code submission failed.")
 
-    # 4. Get system info
+        # Example for C++
+        sample_code_cpp = "#include <iostream>\nint main() { std::string s; std::cin >> s; std::cout << \"Hello C++: \" << s << std::endl; return 0; }"
+        sample_stdin_cpp = "World"
+        print(f"\nSubmitting C++ code using name 'c++': {sample_code_cpp} with stdin: {sample_stdin_cpp}")
+        submission_token_cpp = judge0_service.submit_code(source_code=sample_code_cpp, language="c++", stdin=sample_stdin_cpp)
+
+        if submission_token_cpp:
+            print(f"C++ submission successful. Token: {submission_token_cpp}")
+            print("Waiting for C++ submission to complete...")
+            submission_details_cpp = judge0_service.wait_for_submission(submission_token_cpp)
+            if submission_details_cpp:
+                print("\nC++ submission details:")
+                print(f"  Status: {submission_details_cpp.get('status', {}).get('description')}")
+                print(f"  Stdout: {submission_details_cpp.get('stdout')}")
+                if submission_details_cpp.get('stderr'):
+                    print(f"  Stderr: {submission_details_cpp.get('stderr')}")
+                if submission_details_cpp.get('compile_output'):
+                    print(f"  Compile Output: {submission_details_cpp.get('compile_output')}")
+            else:
+                print("Failed to retrieve C++ submission details or timed out.")
+        else:
+            print("C++ code submission failed.")
+
+    else:
+        print("Failed to fetch languages. Cannot run detailed example.")
+
+    # 3. Get system info (example)
     print("\nFetching system info...")
     system_info = judge0_service.get_system_info()
     if system_info:
