@@ -130,7 +130,7 @@
 ### 2.1. 环境搭建与项目初始化
 
 -   [ ] 2.1.1. 安装 Node.js 和 npm/yarn。
--   [ ] 2.1.2. 使用 `create-react-app` 或 Vite 初始化 React 项目。
+-   [x] 2.1.2. 使用 `create-react-app` 或 Vite 初始化 React 项目。
 -   [ ] 2.1.3. 安装必要的依赖库 (例如 `axios` for API calls, `react-router-dom` for routing, state management library like Redux Toolkit or Zustand, UI component library like MUI or Ant Design, Markdown renderer, code editor component)。
 -   [ ] 2.1.4. 配置项目结构 (组件、页面、服务、工具函数等目录)。
 
@@ -175,11 +175,11 @@
 -   [ ] 2.4.3.1. **题目描述组件**: 
     -   可展开/收起。
     -   Markdown 内容渲染 (使用 `react-markdown` 或类似库)。
--   [ ] 2.4.3.2. **答题代码区组件**: 
-    -   集成代码编辑器 (Monaco Editor, CodeMirror, or react-simple-code-editor with Prism.js for highlighting)。
-    -   支持语言选择下拉菜单。
-    -   代码输入和编辑功能。
-    -   “运行测试并评估”按钮。
+-   [x] 2.4.3.2. **答题代码区组件**:
+    -   [x] 集成代码编辑器 (Monaco Editor, CodeMirror, or react-simple-code-editor with Prism.js for highlighting)。
+    -   [x] 支持语言选择下拉菜单。
+    -   [x] 代码输入和编辑功能。
+    -   [x] “运行测试并评估”按钮。
 -   [ ] 2.4.3.3. **测试用例及运行结果组件**: 
     -   列表形式展示测试用例。
     -   每项测试用例显示：输入参数、预期输出。
@@ -218,7 +218,7 @@
 
 -   [ ] 2.5.1. 创建 API 服务模块 (使用 `axios` 或 `fetch`)，封装所有后端 API 调用。
 -   [ ] 2.5.2. 在各组件中调用 API 服务获取和提交数据。
--   [ ] 2.5.3. 处理 API 请求的加载状态和错误显示。
+-   [x] 2.5.3. 处理 API 请求的加载状态和错误显示。
 
 ### 2.6. 前端单元测试与组件测试
 
@@ -255,7 +255,7 @@
 
 ## 4. 集成与测试
 
--   [ ] 4.1. **前后端集成测试**: 确保所有 API 接口按预期工作，数据流正确。
+-   [x] 4.1. **前后端集成测试**: 确保所有 API 接口按预期工作，数据流正确。
 -   [ ] 4.2. **用户体验 (UX) 测试**: 
     -   [ ] 4.2.1. 邀请用户进行试用，收集反馈。
     -   [ ] 4.2.2. 检查界面易用性、流程顺畅性。

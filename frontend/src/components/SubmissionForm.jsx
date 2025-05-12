@@ -6,22 +6,54 @@ function SubmissionForm() {
     const [sourceCode, setSourceCode] = useState('');
     const [stdin, setStdin] = useState('');
     const [submissionResult, setSubmissionResult] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [message, setMessage] = useState({ text: '', type: '' });
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        // TODO: Implement API call to submit code
-        console.log({ language, sourceCode, stdin });
-        // Mock result for now
-        setSubmissionResult({
-            status_description: 'Accepted',
-            time: '123.45',
-            memory: '1024',
-            stdout: 'Hello World!',
-            stderr: '',
-            compile_output: '',
-            error_message: ''
-        });
-        alert('代码已提交 (请查看控制台和结果区域)');
+        setSubmissionResult(null); // Reset previous results
+        setMessage({ text: '', type: '' }); // Clear previous messages
+        setIsLoading(true);
+
+        try {
+            const response = await fetch('/api/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    language: language,
+                    source_code: sourceCode, 
+                    stdin: stdin 
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'API 请求失败，且无法解析错误响应。' }));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            setSubmissionResult(result);
+            setMessage({ text: '代码已成功提交并评测！', type: 'success' });
+            // alert('代码已成功提交并评测！'); // Removed alert
+
+        } catch (error) {
+            console.error('提交代码时出错:', error);
+            setSubmissionResult({
+                status_description: 'Error',
+                time: '-',
+                memory: '-',
+                stdout: '-',
+                stderr: error.message || '未知错误',
+                compile_output: '-',
+                error_message: error.message || '提交过程中发生客户端错误。'
+            });
+            setMessage({ text: `提交失败: ${error.message}`, type: 'error' });
+            // alert(`提交失败: ${error.message}`); // Removed alert
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -65,8 +97,16 @@ function SubmissionForm() {
                     />
                 </div>
 
-                <button type="submit" className="btn btn-primary">提交代码</button>
+                <button type="submit" className="btn btn-primary" disabled={isLoading}>
+                    {isLoading ? '正在提交...' : '提交代码'}
+                </button>
             </form>
+
+            {message.text && (
+                <div className={`message-container ${message.type === 'success' ? 'message-success' : 'message-error'}`}>
+                    {message.text}
+                </div>
+            )}
 
             {submissionResult && (
                 <div id="result-container" style={{ marginTop: '20px' }}>
