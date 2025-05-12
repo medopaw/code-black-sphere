@@ -5,6 +5,8 @@ function SubmissionForm() {
     const [language, setLanguage] = useState('python');
     const [sourceCode, setSourceCode] = useState('');
     const [stdin, setStdin] = useState('');
+    const [candidateId, setCandidateId] = useState('test_candidate_001'); // Default or get from props/context
+    const [problemId, setProblemId] = useState('problem_001'); // Default or get from props/context
     const [submissionResult, setSubmissionResult] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
@@ -16,15 +18,17 @@ function SubmissionForm() {
         setIsLoading(true);
 
         try {
-            const response = await fetch('/api/submit', {
+            const response = await fetch('/api/submissions', { // Updated API endpoint
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
+                    candidate_id: candidateId,
+                    problem_id: problemId,
                     language: language,
-                    source_code: sourceCode, 
-                    stdin: stdin 
+                    code: sourceCode, // Changed source_code to code
+                    stdin: stdin, // Re-added stdin, assuming backend can handle it or it's an optional field
                 }),
             });
 
@@ -69,6 +73,30 @@ function SubmissionForm() {
                         <option value="c++">C++</option>
                         <option value="c">C</option>
                     </select>
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="candidate_id">候选人 ID:</label>
+                    <input 
+                        type="text" 
+                        id="candidate_id" 
+                        name="candidate_id" 
+                        className="form-control" 
+                        value={candidateId} 
+                        onChange={(e) => setCandidateId(e.target.value)} 
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="problem_id">题目 ID:</label>
+                    <input 
+                        type="text" 
+                        id="problem_id" 
+                        name="problem_id" 
+                        className="form-control" 
+                        value={problemId} 
+                        onChange={(e) => setProblemId(e.target.value)} 
+                    />
                 </div>
 
                 <div className="form-group">
