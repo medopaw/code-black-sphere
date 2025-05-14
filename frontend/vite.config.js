@@ -1,7 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import dotenv from 'dotenv'
 
-// https://vite.dev/config/
+// 加载环境变量
+dotenv.config()
+
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
@@ -13,4 +17,7 @@ export default defineConfig({
       },
     },
   },
+  define: {
+    'process.env': process.env
+  }
 })
