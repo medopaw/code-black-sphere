@@ -87,24 +87,34 @@ class LLMService:
                 return "Error: LLM API request failed after all retries."
 
             if stream:
-                # Placeholder for streaming logic. This would typically yield chunks.
-                # For simplicity in this initial version, we'll just concatenate if stream=True for now.
-                # A proper streaming implementation would involve yielding content parts.
+                # 优化流式处理逻辑
                 full_response_content = ""
+                buffer = ""
                 for chunk in response.iter_lines():
                     if chunk:
                         decoded_chunk = chunk.decode('utf-8')
                         if decoded_chunk.startswith('data: '):
                             json_data_str = decoded_chunk[len('data: '):]
                             if json_data_str.strip() == "[DONE]":
+                                # 处理缓冲区中的最后内容
+                                if buffer:
+                                    full_response_content += buffer
                                 break
                             try:
                                 json_data = json.loads(json_data_str)
                                 if json_data['choices'][0]['delta'].get('content'):
-                                    full_response_content += json_data['choices'][0]['delta']['content']
-                            except json.JSONDecodeError:
-                                current_app.logger.error(f"Error decoding stream chunk: {json_data_str}")
-                                continue # Or handle error appropriately
+                                    content = json_data['choices'][0]['delta']['content']
+                                    buffer += content
+                                    # 当缓冲区达到一定大小时，将其添加到完整响应中
+                                    if len(buffer) >= 100:  # 可以根据需要调整缓冲区大小
+                                        full_response_content += buffer
+                                        buffer = ""
+                            except json.JSONDecodeError as e:
+                                current_app.logger.error(f"Error decoding stream chunk: {json_data_str}, error: {e}")
+                                continue
+                            except KeyError as e:
+                                current_app.logger.error(f"Unexpected response structure: {json_data}, error: {e}")
+                                continue
                 return full_response_content.strip()
             else:
                 response_data = response.json()

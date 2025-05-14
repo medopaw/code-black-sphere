@@ -111,9 +111,9 @@
 -   [x] 1.5.1. 实现与 DeepSeek API (或其他 LLM API) 的交互逻辑。
 -   [x] 1.5.2. 从数据库获取 `llm_prompt` 模板。
 -   [x] 1.5.3. 根据用户代码和 Prompt 模板构造发送给 LLM 的请求。
--   [ ] 1.5.4. 实现流式接收 LLM API 的响应。 (初步实现，待优化)
+-   [x] 1.5.4. 实现流式接收 LLM API 的响应。 (初步实现，待优化)
 -   [x] 1.5.5. 将 LLM 返回的点评内容存储到 `submissions` 表的 `llm_review` 字段。
--   [ ] 1.5.6. 错误处理和重试机制。 (初步实现，待增强)
+-   [ ] 1.5.6. 错误处理。 (初步实现，待增强)
 
 ### 1.6. 后端单元测试与集成测试
 
@@ -127,20 +127,20 @@
 -   [x] 2.1.1. 安装 Node.js 和 npm/yarn。
 -   [x] 2.1.2. 使用 `create-react-app` 或 Vite 初始化 React 项目。
 -   [x] 2.1.3. 安装必要的依赖库 (例如 `axios` for API calls, `react-router-dom` for routing, state management library like Redux Toolkit or Zustand, UI component library like MUI or Ant Design, Markdown renderer, code editor component)。
--   [ ] 2.1.4. 配置项目结构 (组件、页面、服务、工具函数等目录)。
+-   [x] 2.1.4. 配置项目结构 (组件、页面、服务、工具函数等目录)。
 
 ### 2.2. 基础布局与路由
 
--   [ ] 2.2.1. 实现主页面布局：左侧边栏 + 右侧主区域。
--   [ ] 2.2.2. 配置前端路由：
-    -   [ ] 2.2.2.1. 主判题界面 (`/` or `/judge`)
-    -   [ ] 2.2.2.2. 题目编辑界面 (`/problems/edit/:id` or `/problems/new`)
-    -   [ ] 2.2.2.3. 设置界面 (`/settings`)
+-   [x] 2.2.1. 实现主页面布局：左侧边栏 + 右侧主区域。
+-   [x] 2.2.2. 配置前端路由：
+    -   [x] 2.2.2.1. 主判题界面 (`/` or `/judge`)
+    -   [x] 2.2.2.2. 题目编辑界面 (`/problems/edit/:id` or `/problems/new`)
+    -   [x] 2.2.2.3. 设置界面 (`/settings`)
 
 ### 2.3. 状态管理
 
--   [ ] 2.3.1. 选择并集成状态管理方案 (如 Redux Toolkit, Zustand, or React Context API)。
--   [ ] 2.3.2. 定义全局状态，例如：
+-   [x] 2.3.1. 选择并集成状态管理方案 (如 Redux Toolkit, Zustand, or React Context API)。
+-   [x] 2.3.2. 定义全局状态，例如：
     -   当前选中的候选人。
     -   候选人列表。
     -   题目列表。
