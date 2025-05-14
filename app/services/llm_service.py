@@ -59,8 +59,6 @@ class LLMService:
         
         return problem.llm_prompt
 
-        reraise=True
-    )
     def _make_api_request(self, headers: Dict[str, str], payload: Dict[str, Any], stream: bool = False) -> requests.Response:
         """发送 API 请求"""
         try:
