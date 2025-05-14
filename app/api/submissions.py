@@ -252,7 +252,7 @@ def submit_solution():
 @submissions_bp.route('/submissions', methods=['GET'])
 def get_submissions():
     # Add filtering capabilities later (e.g., by candidate_id, problem_id)
-    submissions = Submission.query.order_by(Submission.submission_time.desc()).all()
+    submissions = Submission.query.order_by(Submission.submitted_at.desc()).all()
     output = []
     for sub in submissions:
         output.append({
@@ -261,7 +261,7 @@ def get_submissions():
             'problem_id': sub.problem_id,
             'language': sub.language,
             'code': sub.code, # Consider if code should always be returned in list view
-            'submission_time': sub.submission_time.isoformat(),
+            'submission_time': sub.submitted_at.isoformat(),
             'status': sub.status,
             'test_results': sub.test_results,
             'llm_review': sub.llm_review
@@ -277,7 +277,7 @@ def get_submission(submission_id):
         'problem_id': submission.problem_id,
         'language': submission.language,
         'code': submission.code,
-        'submission_time': submission.submission_time.isoformat(),
+        'submission_time': submission.submitted_at.isoformat(),
         'status': submission.status,
         'test_results': submission.test_results,
         'llm_review': submission.llm_review
@@ -289,7 +289,7 @@ def get_submissions_by_candidate_problem(candidate_id, problem_id):
     candidate = Candidate.query.get_or_404(candidate_id)
     problem = Problem.query.get_or_404(problem_id)
 
-    submissions = Submission.query.filter_by(candidate_id=candidate_id, problem_id=problem_id).order_by(Submission.submission_time.desc()).all()
+    submissions = Submission.query.filter_by(candidate_id=candidate_id, problem_id=problem_id).order_by(Submission.submitted_at.desc()).all()
 
     if not submissions:
         return jsonify({'message': 'No submissions found for this candidate and problem'}), 404
@@ -302,7 +302,7 @@ def get_submissions_by_candidate_problem(candidate_id, problem_id):
             'problem_id': sub.problem_id,
             'language': sub.language,
             'code': sub.code,
-            'submission_time': sub.submission_time.isoformat(),
+            'submission_time': sub.submitted_at.isoformat(),
             'status': sub.status,
             'test_results': sub.test_results,
             'llm_review': sub.llm_review
