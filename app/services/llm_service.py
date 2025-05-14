@@ -30,6 +30,10 @@ class LLMResponseError(LLMServiceError):
     """响应解析相关错误"""
     pass
 
+class LLMTimeoutError(LLMServiceError):
+    """超时相关错误"""
+    pass
+
 class LLMService:
     def __init__(self):
         self.api_key = self._get_api_key()
@@ -55,23 +59,55 @@ class LLMService:
         
         return problem.llm_prompt
 
-        """处理流式响应错误"""
-        self.logger.error(f"Error processing stream chunk: {chunk}, error: {str(e)}")
-        raise LLMResponseError(f"Error processing stream response: {str(e)}")
+        reraise=True
+    )
+    def _make_api_request(self, headers: Dict[str, str], payload: Dict[str, Any], stream: bool = False) -> requests.Response:
+        """发送 API 请求"""
+        try:
+            response = requests.post(
+                f'{self.base_url}/v1/chat/completions',
+                headers=headers,
+                json=payload,
+                stream=stream,
+                timeout=REQUEST_TIMEOUT
+            )
+            response.raise_for_status()
+            return response
+        except Timeout:
+            self.logger.error("LLM API request timed out")
+            raise LLMTimeoutError("Request to LLM API timed out")
+        except ConnectionError:
+            self.logger.error("Failed to connect to LLM API")
+            raise LLMAPIError("Failed to connect to LLM API")
+        except RequestException as e:
+            self.logger.error(f"LLM API request failed: {str(e)}")
+            raise LLMAPIError(f"LLM API request failed: {str(e)}")
 
     def _validate_response(self, response_data: Dict[str, Any]) -> str:
         """验证并解析 API 响应"""
-        if not response_data.get('choices'):
-            raise LLMResponseError("No choices in LLM response")
-        
-        if not response_data['choices'][0].get('message'):
-            raise LLMResponseError("No message in LLM response choice")
-        
-        content = response_data['choices'][0]['message'].get('content')
-        if not content:
-            raise LLMResponseError("No content in LLM response message")
-        
-        return content.strip()
+        try:
+            if not response_data.get('choices'):
+                raise LLMResponseError("No choices in LLM response")
+            
+            if not response_data['choices'][0].get('message'):
+                raise LLMResponseError("No message in LLM response choice")
+            
+            content = response_data['choices'][0]['message'].get('content')
+            if not content:
+                raise LLMResponseError("No content in LLM response message")
+            
+            # 验证内容长度
+            if len(content.strip()) < 10:  # 假设有效响应至少需要10个字符
+                raise LLMResponseError("LLM response content too short")
+            
+            return content.strip()
+        except (KeyError, TypeError) as e:
+            raise LLMResponseError(f"Invalid response format: {str(e)}")
+
+    def _handle_stream_error(self, chunk: str, error: Exception) -> None:
+        """处理流式响应错误"""
+        self.logger.error(f"Error processing stream chunk: {chunk}, error: {str(error)}")
+        raise LLMResponseError(f"Error processing stream response: {str(error)}")
 
     def generate_review(self, code: str, problem_id: int, language: str, stream: bool = False) -> str:
         """生成代码评审"""
@@ -94,17 +130,10 @@ class LLMService:
             }
 
             try:
-                response = requests.post(
-                    f'{self.base_url}/v1/chat/completions',
-                    headers=headers,
-                    json=payload,
-                    stream=stream,
-                    timeout=REQUEST_TIMEOUT
-                )
-                response.raise_for_status()
-            except Exception as e:
-                self.logger.error(f"LLM API request failed: {str(e)}")
-                raise LLMAPIError(f"LLM API request failed: {str(e)}")
+                response = self._make_api_request(headers, payload, stream)
+            except (LLMAPIError, LLMTimeoutError) as e:
+                self.logger.error(f"LLM API request failed after retries: {str(e)}")
+                raise
 
             if stream:
                 return self._handle_stream_response(response)
@@ -128,9 +157,13 @@ class LLMService:
         """处理流式响应"""
         full_response_content = ""
         buffer = ""
+        start_time = time.time()
         
         try:
             for chunk in response.iter_lines():
+                if time.time() - start_time > REQUEST_TIMEOUT:
+                    raise LLMTimeoutError("Stream response timeout")
+
                 if not chunk:
                     continue
                     
@@ -157,6 +190,9 @@ class LLMService:
                     except KeyError as e:
                         self._handle_stream_error(json_data_str, e)
                         
+            if not full_response_content.strip():
+                raise LLMResponseError("Empty response from LLM")
+                
             return full_response_content.strip()
             
         except Exception as e:
@@ -198,7 +234,7 @@ def generate_llm_review_async(submission_id: int) -> None:
                 
         except LLMServiceError as e:
             current_app.logger.error(f"LLM service error for submission {submission_id}: {str(e)}")
-            # 可以选择将错误信息保存到 submission 中
+            # 将错误信息保存到 submission 中
             if submission:
                 submission.llm_review = f"Error generating review: {str(e)}"
                 try:
