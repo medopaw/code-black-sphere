@@ -59,7 +59,7 @@
 
 #### 1.3.4. 答题提交与评测 API (`/submissions`)
 
--   [ ] 1.3.4.1. `POST /submissions`: 提交代码进行评测。 (基础结构已完成，执行和评估待办)
+-   [x] 1.3.4.1. `POST /submissions`: 提交代码进行评测。 (执行和评估已完成)
     -   接收 `candidate_id`, `problem_id`, `language`, `code`。
     -   调用代码执行模块。
     -   保存 `submissions` 记录，包括 `test_results`。
@@ -96,24 +96,24 @@
 -   [x] 1.4.1. 调研并选择合适的开源判题 Docker 框架 (如 Judge0, Piston API)。
     -   初步调研完成，选择 Judge0 作为判题引擎。
 -   [x] 1.4.2. 学习并集成所选框架的 API。
--   [ ] 1.4.3. 实现代码执行服务，该服务接收代码、语言、输入，并调用判题框架执行。 (进行中)
+-   [x] 1.4.3. 实现代码执行服务，该服务接收代码、语言、输入，并调用判题框架执行。
     -   [x] 1.4.3.1. 实现与判题引擎的 API 对接，支持 Python, JavaScript, Java, C++。
     -   [x] 1.4.3.2. 安全处理：确保用户提交的代码在沙箱环境中执行，限制 CPU、内存、执行时间。
-    -   [ ] 1.4.3.3. 结果解析：从判题引擎获取执行结果 (编译错误、运行时错误、答案正确/错误、超时、超内存等)。
--   [ ] 1.4.4. 实现测试用例评测逻辑：
-    -   [ ] 1.4.4.1. 遍历题目的所有测试用例。
-    -   [ ] 1.4.4.2. 针对每个测试用例执行用户代码。
-    -   [ ] 1.4.4.3. 比较实际输出与预期输出。
-    -   [ ] 1.4.4.4. 记录每个测试用例的通过状态、实际输出和错误信息到 `test_results` (JSON 格式)。
+    -   [x] 1.4.3.3. 结果解析：从判题引擎获取执行结果 (编译错误、运行时错误、答案正确/错误、超时、超内存等)。
+-   [x] 1.4.4. 实现测试用例评测逻辑：
+    -   [x] 1.4.4.1. 遍历题目的所有测试用例。
+    -   [x] 1.4.4.2. 针对每个测试用例执行用户代码。
+    -   [x] 1.4.4.3. 比较实际输出与预期输出。
+    -   [x] 1.4.4.4. 记录每个测试用例的通过状态、实际输出和错误信息到 `test_results` (JSON 格式)。
 
 ### 1.5. LLM 集成模块
 
--   [ ] 1.5.1. 实现与 DeepSeek API (或其他 LLM API) 的交互逻辑。
--   [ ] 1.5.2. 从数据库获取 `llm_prompt` 模板。
--   [ ] 1.5.3. 根据用户代码和 Prompt 模板构造发送给 LLM 的请求。
--   [ ] 1.5.4. 实现流式接收 LLM API 的响应。
--   [ ] 1.5.5. 将 LLM 返回的点评内容存储到 `submissions` 表的 `llm_review` 字段。
--   [ ] 1.5.6. 错误处理和重试机制。
+-   [x] 1.5.1. 实现与 DeepSeek API (或其他 LLM API) 的交互逻辑。
+-   [x] 1.5.2. 从数据库获取 `llm_prompt` 模板。
+-   [x] 1.5.3. 根据用户代码和 Prompt 模板构造发送给 LLM 的请求。
+-   [ ] 1.5.4. 实现流式接收 LLM API 的响应。 (初步实现，待优化)
+-   [x] 1.5.5. 将 LLM 返回的点评内容存储到 `submissions` 表的 `llm_review` 字段。
+-   [ ] 1.5.6. 错误处理和重试机制。 (初步实现，待增强)
 
 ### 1.6. 认证与授权 (可选，初期可简化)
 
@@ -129,9 +129,9 @@
 
 ### 2.1. 环境搭建与项目初始化
 
--   [ ] 2.1.1. 安装 Node.js 和 npm/yarn。
+-   [x] 2.1.1. 安装 Node.js 和 npm/yarn。
 -   [x] 2.1.2. 使用 `create-react-app` 或 Vite 初始化 React 项目。
--   [ ] 2.1.3. 安装必要的依赖库 (例如 `axios` for API calls, `react-router-dom` for routing, state management library like Redux Toolkit or Zustand, UI component library like MUI or Ant Design, Markdown renderer, code editor component)。
+-   [x] 2.1.3. 安装必要的依赖库 (例如 `axios` for API calls, `react-router-dom` for routing, state management library like Redux Toolkit or Zustand, UI component library like MUI or Ant Design, Markdown renderer, code editor component)。
 -   [ ] 2.1.4. 配置项目结构 (组件、页面、服务、工具函数等目录)。
 
 ### 2.2. 基础布局与路由
@@ -166,9 +166,11 @@
 -   [ ] 2.4.2.2. 单个 Tab 组件：
     -   显示题目名称。
     -   关闭 Tab 按钮 (仅当 Tab 数量 > 1)。
--   [ ] 2.4.2.3. “新建 Tab” 按钮及题目选择逻辑。
+-   [ ] 2.4.2.3. "新建 Tab" 按钮及题目选择逻辑。
 -   [ ] 2.4.2.4. Tab 状态保持逻辑 (CSS 显示/隐藏，不销毁 DOM)。
 -   [ ] 2.4.2.5. 默认 Tab 加载逻辑。
+-   [ ] 2.4.2.6. 将现有 `SubmissionForm.jsx` 的功能 (代码编辑、提交、基本结果展示) 重构并集成到单个 Tab 内容中，使其与题目描述、详细测试用例、LLM 点评等组件协同工作。
+    -   [ ] 2.4.2.6.1. 调整 Candidate ID 和 Problem ID 的获取方式，以适应全局候选人选择和 Tab 切换逻辑。
 
 #### 2.4.3. 题目 Tab 内容组件
 
@@ -179,7 +181,7 @@
     -   [x] 集成代码编辑器 (Monaco Editor, CodeMirror, or react-simple-code-editor with Prism.js for highlighting)。
     -   [x] 支持语言选择下拉菜单。
     -   [x] 代码输入和编辑功能。
-    -   [x] “运行测试并评估”按钮。
+    -   [x] "运行测试并评估"按钮。
 -   [ ] 2.4.3.3. **测试用例及运行结果组件**: 
     -   列表形式展示测试用例。
     -   每项测试用例显示：输入参数、预期输出。
@@ -235,7 +237,7 @@
     -   [ ] 3.2.1. 用户选择题目，打开新的 Tab。
     -   [ ] 3.2.2. Tab 内正确显示题目描述。
     -   [ ] 3.2.3. 用户在代码区输入代码，选择语言。
-    -   [ ] 3.2.4. 点击“运行测试并评估”：
+    -   [ ] 3.2.4. 点击"运行测试并评估"：
         -   [ ] 3.2.4.1. 前端发送代码到后端。
         -   [ ] 3.2.4.2. 后端执行代码并通过所有测试用例。
         -   [ ] 3.2.4.3. 前端展示每个测试用例的通过状态、实际输出/错误。

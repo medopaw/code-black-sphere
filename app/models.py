@@ -1,7 +1,7 @@
 from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, UTC
 
 class Candidate(UserMixin, db.Model):
     __tablename__ = 'candidates'
@@ -9,7 +9,7 @@ class Candidate(UserMixin, db.Model):
     name = db.Column(db.Text, nullable=False, unique=True)
     email = db.Column(db.Text, nullable=False, unique=True) # Assuming email is also required and unique
     password_hash = db.Column(db.String(128))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
 
     submissions = db.relationship('Submission', backref='candidate', lazy='dynamic')
     tabs = db.relationship('CandidateProblemTab', backref='candidate', lazy='dynamic', cascade='all, delete-orphan')
@@ -29,8 +29,8 @@ class Problem(db.Model):
     title = db.Column(db.Text, nullable=False, unique=True)
     description = db.Column(db.Text)
     llm_prompt = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     test_cases = db.relationship('TestCase', backref='problem', lazy='dynamic', cascade='all, delete-orphan')
     submissions = db.relationship('Submission', backref='problem', lazy='dynamic')
@@ -42,7 +42,7 @@ class TestCase(db.Model):
     problem_id = db.Column(db.Integer, db.ForeignKey('problems.id', ondelete='CASCADE'), nullable=False)
     input_params = db.Column(db.Text)  # JSON string
     expected_output = db.Column(db.Text)  # JSON string
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
 
 class Submission(db.Model):
     __tablename__ = 'submissions'
@@ -53,7 +53,8 @@ class Submission(db.Model):
     code = db.Column(db.Text)
     test_results = db.Column(db.Text)  # JSON string
     llm_review = db.Column(db.Text)
-    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(50))  # To store overall status like 'Accepted', 'Wrong Answer', etc.
+    submitted_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
 
 class CandidateProblemTab(db.Model):
     __tablename__ = 'candidate_problem_tabs'
