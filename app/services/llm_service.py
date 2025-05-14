@@ -2,168 +2,219 @@ from flask import current_app
 import requests
 import json
 import time
-from app.models import Setting, Problem, Submission # Assuming Submission will be updated here
-from app import db # For potential async task updates
+from app.models import Setting, Problem, Submission
+from app import db
+from typing import Optional, Dict, Any, Union
+from requests.exceptions import RequestException, Timeout, ConnectionError
+import logging
 
-# It's good practice to define constants for setting keys
+# 定义常量
 DEEPSEEK_API_KEY_SETTING = 'deepseek_api_key'
-DEFAULT_LLM_MODEL = 'deepseek-coder' # Or whatever model is preferred
+DEFAULT_LLM_MODEL = 'deepseek-coder'
+REQUEST_TIMEOUT = 120  # 秒
+STREAM_BUFFER_SIZE = 100  # 字符
+
+class LLMServiceError(Exception):
+    """LLM 服务基础异常类"""
+    pass
+
+class LLMConfigError(LLMServiceError):
+    """配置相关错误"""
+    pass
+
+class LLMAPIError(LLMServiceError):
+    """API 调用相关错误"""
+    pass
+
+class LLMResponseError(LLMServiceError):
+    """响应解析相关错误"""
+    pass
 
 class LLMService:
     def __init__(self):
         self.api_key = self._get_api_key()
-        self.base_url = current_app.config.get('DEEPSEEK_API_URL', 'https://api.deepseek.com') # Or your specific endpoint
+        self.base_url = current_app.config.get('DEEPSEEK_API_URL', 'https://api.deepseek.com')
+        self.logger = logging.getLogger(__name__)
 
-    def _get_api_key(self):
-        # Fetch API key from database settings
-        # Note: In a real app, API keys should be encrypted in the DB and decrypted here.
-        # For simplicity, we assume it's stored as plain text for now, as per PLAN.md 1.3.6.3 note on encryption.
+    def _get_api_key(self) -> Optional[str]:
+        """获取 API Key，如果未配置则抛出异常"""
         api_key_setting = Setting.query.get(DEEPSEEK_API_KEY_SETTING)
-        if api_key_setting and api_key_setting.value:
-            return api_key_setting.value
-        current_app.logger.warning(f'{DEEPSEEK_API_KEY_SETTING} not found in settings.')
-        return None
+        if not api_key_setting or not api_key_setting.value:
+            raise LLMConfigError(f"{DEEPSEEK_API_KEY_SETTING} not found in settings")
+        return api_key_setting.value
 
     def get_llm_prompt_for_problem(self, problem_id: int) -> str:
+        """获取题目的 LLM Prompt，如果未找到则使用默认值"""
         problem = Problem.query.get(problem_id)
-        if problem and problem.llm_prompt:
-            return problem.llm_prompt
-        # Fallback to a generic prompt if specific one not found or problem doesn't exist
-        current_app.logger.warning(f"LLM prompt for problem_id {problem_id} not found. Using generic prompt.")
-        return "Please review the following code for its quality, correctness, efficiency, and provide suggestions for improvement. Score the code out of 100."
+        if not problem:
+            raise LLMConfigError(f"Problem with ID {problem_id} not found")
+        
+        if not problem.llm_prompt:
+            self.logger.warning(f"LLM prompt for problem_id {problem_id} not found. Using generic prompt.")
+            return "Please review the following code for its quality, correctness, efficiency, and provide suggestions for improvement. Score the code out of 100."
+        
+        return problem.llm_prompt
+
+        """处理流式响应错误"""
+        self.logger.error(f"Error processing stream chunk: {chunk}, error: {str(e)}")
+        raise LLMResponseError(f"Error processing stream response: {str(e)}")
+
+    def _validate_response(self, response_data: Dict[str, Any]) -> str:
+        """验证并解析 API 响应"""
+        if not response_data.get('choices'):
+            raise LLMResponseError("No choices in LLM response")
+        
+        if not response_data['choices'][0].get('message'):
+            raise LLMResponseError("No message in LLM response choice")
+        
+        content = response_data['choices'][0]['message'].get('content')
+        if not content:
+            raise LLMResponseError("No content in LLM response message")
+        
+        return content.strip()
 
     def generate_review(self, code: str, problem_id: int, language: str, stream: bool = False) -> str:
-        if not self.api_key:
-            current_app.logger.error("DeepSeek API key is not configured. Cannot generate LLM review.")
-            return "Error: LLM API key not configured."
-
-        llm_prompt_template = self.get_llm_prompt_for_problem(problem_id)
-        
-        # Construct the prompt. You might want to make this more sophisticated.
-        # Example: Include language, problem description, etc.
-        # For now, just combining the template with the code.
-        # Ensure the prompt clearly asks for what you need (review, suggestions, score).
-        final_prompt = f"{llm_prompt_template}\n\nLanguage: {language}\n\nCode to review:\n```\n{code}\n```"
-
-        headers = {
-            'Authorization': f'Bearer {self.api_key}',
-            'Content-Type': 'application/json'
-        }
-        payload = {
-            'model': current_app.config.get('LLM_MODEL', DEFAULT_LLM_MODEL),
-            'messages': [
-                {'role': 'system', 'content': 'You are a helpful AI assistant that reviews code.'},
-                {'role': 'user', 'content': final_prompt}
-            ],
-            'stream': stream # Enable or disable streaming based on parameter
-        }
-
+        """生成代码评审"""
         try:
-            # Using v1/chat/completions endpoint as it's common for DeepSeek-like APIs
-            max_retries = 3
-            retry_delay = 5 # seconds
-            response = None # Initialize response to None
-            for attempt in range(max_retries):
-                try:
-                    response = requests.post(
-                        f'{self.base_url}/v1/chat/completions', 
-                        headers=headers, 
-                        json=payload, 
-                        stream=stream, 
-                        timeout=120 # Increased timeout for LLM
-                    )
-                    response.raise_for_status() # Raise an exception for HTTP errors (4xx or 5xx)
-                    break # If successful, exit retry loop
-                except requests.exceptions.RequestException as e_req:
-                    current_app.logger.warning(f"LLM API request attempt {attempt + 1}/{max_retries} failed: {e_req}")
-                    if attempt < max_retries - 1:
-                        time.sleep(retry_delay)
-                    else:
-                        # This was the last attempt, re-raise the exception or handle as final failure
-                        raise # Re-raise the last exception to be caught by the outer try-except
+            llm_prompt_template = self.get_llm_prompt_for_problem(problem_id)
+            final_prompt = f"{llm_prompt_template}\n\nLanguage: {language}\n\nCode to review:\n```\n{code}\n```"
+
+            headers = {
+                'Authorization': f'Bearer {self.api_key}',
+                'Content-Type': 'application/json'
+            }
             
-            if response is None: # Should not happen if raise is used above, but as a safeguard
-                current_app.logger.error("LLM API request failed after all retries, response is None.")
-                return "Error: LLM API request failed after all retries."
+            payload = {
+                'model': current_app.config.get('LLM_MODEL', DEFAULT_LLM_MODEL),
+                'messages': [
+                    {'role': 'system', 'content': 'You are a helpful AI assistant that reviews code.'},
+                    {'role': 'user', 'content': final_prompt}
+                ],
+                'stream': stream
+            }
+
+            try:
+                response = requests.post(
+                    f'{self.base_url}/v1/chat/completions',
+                    headers=headers,
+                    json=payload,
+                    stream=stream,
+                    timeout=REQUEST_TIMEOUT
+                )
+                response.raise_for_status()
+            except Exception as e:
+                self.logger.error(f"LLM API request failed: {str(e)}")
+                raise LLMAPIError(f"LLM API request failed: {str(e)}")
 
             if stream:
-                # 优化流式处理逻辑
-                full_response_content = ""
-                buffer = ""
-                for chunk in response.iter_lines():
-                    if chunk:
-                        decoded_chunk = chunk.decode('utf-8')
-                        if decoded_chunk.startswith('data: '):
-                            json_data_str = decoded_chunk[len('data: '):]
-                            if json_data_str.strip() == "[DONE]":
-                                # 处理缓冲区中的最后内容
-                                if buffer:
-                                    full_response_content += buffer
-                                break
-                            try:
-                                json_data = json.loads(json_data_str)
-                                if json_data['choices'][0]['delta'].get('content'):
-                                    content = json_data['choices'][0]['delta']['content']
-                                    buffer += content
-                                    # 当缓冲区达到一定大小时，将其添加到完整响应中
-                                    if len(buffer) >= 100:  # 可以根据需要调整缓冲区大小
-                                        full_response_content += buffer
-                                        buffer = ""
-                            except json.JSONDecodeError as e:
-                                current_app.logger.error(f"Error decoding stream chunk: {json_data_str}, error: {e}")
-                                continue
-                            except KeyError as e:
-                                current_app.logger.error(f"Unexpected response structure: {json_data}, error: {e}")
-                                continue
-                return full_response_content.strip()
+                return self._handle_stream_response(response)
             else:
-                response_data = response.json()
-                # Extract the content from the response, structure may vary by LLM API
-                # Assuming a common structure like response_data['choices'][0]['message']['content']
-                if response_data.get('choices') and len(response_data['choices']) > 0:
-                    message = response_data['choices'][0].get('message')
-                    if message and message.get('content'):
-                        return message['content'].strip()
-                current_app.logger.error(f"Unexpected LLM API response structure: {response_data}")
-                return "Error: Could not parse LLM response."
+                return self._validate_response(response.json())
 
-        except requests.exceptions.RequestException as e:
-            current_app.logger.error(f"LLM API request failed: {e}")
-            return f"Error: LLM API request failed - {e}"
+        except LLMConfigError as e:
+            self.logger.error(f"LLM configuration error: {str(e)}")
+            raise
+        except LLMAPIError as e:
+            self.logger.error(f"LLM API error: {str(e)}")
+            raise
+        except LLMResponseError as e:
+            self.logger.error(f"LLM response error: {str(e)}")
+            raise
         except Exception as e:
-            current_app.logger.error(f"An unexpected error occurred during LLM review generation: {e}")
-            return f"Error: An unexpected error occurred - {e}"
+            self.logger.error(f"Unexpected error in LLM review generation: {str(e)}")
+            raise LLMServiceError(f"Unexpected error: {str(e)}")
 
-# Example of how this might be called asynchronously (e.g., with Celery or Flask-APScheduler)
-# This is a conceptual placeholder and would need a proper task queue setup.
-def generate_llm_review_async(submission_id: int):
-    from app import create_app # To get app context in a background task
+    def _handle_stream_response(self, response: requests.Response) -> str:
+        """处理流式响应"""
+        full_response_content = ""
+        buffer = ""
+        
+        try:
+            for chunk in response.iter_lines():
+                if not chunk:
+                    continue
+                    
+                decoded_chunk = chunk.decode('utf-8')
+                if decoded_chunk.startswith('data: '):
+                    json_data_str = decoded_chunk[len('data: '):]
+                    
+                    if json_data_str.strip() == "[DONE]":
+                        if buffer:
+                            full_response_content += buffer
+                        break
+                        
+                    try:
+                        json_data = json.loads(json_data_str)
+                        if json_data['choices'][0]['delta'].get('content'):
+                            content = json_data['choices'][0]['delta']['content']
+                            buffer += content
+                            
+                            if len(buffer) >= STREAM_BUFFER_SIZE:
+                                full_response_content += buffer
+                                buffer = ""
+                    except json.JSONDecodeError as e:
+                        self._handle_stream_error(json_data_str, e)
+                    except KeyError as e:
+                        self._handle_stream_error(json_data_str, e)
+                        
+            return full_response_content.strip()
+            
+        except Exception as e:
+            self.logger.error(f"Error processing stream response: {str(e)}")
+            raise LLMResponseError(f"Stream processing error: {str(e)}")
+
+def generate_llm_review_async(submission_id: int) -> None:
+    """异步生成 LLM 评审"""
+    from app import create_app
+    
     app = create_app()
     with app.app_context():
-        submission = Submission.query.get(submission_id)
-        if not submission:
-            current_app.logger.error(f"Submission {submission_id} not found for async LLM review.")
-            return
-
-        if submission.llm_review: # Avoid re-processing if already done
-            current_app.logger.info(f"LLM review for submission {submission_id} already exists.")
-            return
-
-        llm_service = LLMService()
-        review_content = llm_service.generate_review(
-            code=submission.code,
-            problem_id=submission.problem_id,
-            language=submission.language,
-            stream=False # For background tasks, streaming to DB isn't typical directly
-        )
-
-        submission.llm_review = review_content
         try:
-            db.session.commit()
-            current_app.logger.info(f"LLM review for submission {submission_id} completed and saved.")
+            submission = Submission.query.get(submission_id)
+            if not submission:
+                current_app.logger.error(f"Submission {submission_id} not found for async LLM review")
+                return
+
+            if submission.llm_review:
+                current_app.logger.info(f"LLM review for submission {submission_id} already exists")
+                return
+
+            llm_service = LLMService()
+            review_content = llm_service.generate_review(
+                code=submission.code,
+                problem_id=submission.problem_id,
+                language=submission.language,
+                stream=False
+            )
+
+            submission.llm_review = review_content
+            try:
+                db.session.commit()
+                current_app.logger.info(f"LLM review for submission {submission_id} completed and saved")
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(f"Failed to save LLM review for submission {submission_id}: {str(e)}")
+                raise
+                
+        except LLMServiceError as e:
+            current_app.logger.error(f"LLM service error for submission {submission_id}: {str(e)}")
+            # 可以选择将错误信息保存到 submission 中
+            if submission:
+                submission.llm_review = f"Error generating review: {str(e)}"
+                try:
+                    db.session.commit()
+                except Exception as db_error:
+                    db.session.rollback()
+                    current_app.logger.error(f"Failed to save error message for submission {submission_id}: {str(db_error)}")
         except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Failed to save LLM review for submission {submission_id}: {e}")
+            current_app.logger.error(f"Unexpected error in async LLM review for submission {submission_id}: {str(e)}")
+            if submission:
+                submission.llm_review = f"Unexpected error: {str(e)}"
+                try:
+                    db.session.commit()
+                except Exception as db_error:
+                    db.session.rollback()
+                    current_app.logger.error(f"Failed to save error message for submission {submission_id}: {str(db_error)}")
 
 if __name__ == '__main__':
     # This part is for conceptual testing and would require a Flask app context.
