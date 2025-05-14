@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Box, Button, FormControl, InputLabel, Select, MenuItem, CircularProgress } from '@mui/material';
 import Editor from '@monaco-editor/react';
 
 const SUPPORTED_LANGUAGES = [
@@ -9,13 +9,9 @@ const SUPPORTED_LANGUAGES = [
   { value: 'cpp', label: 'C++' },
 ];
 
-const CodeEditor = ({ code, onChange, onSubmit, language }) => {
+const CodeEditor = ({ code, onChange, onSubmit, language, submitting }) => {
   const handleEditorChange = (value) => {
     onChange(value);
-  };
-
-  const handleLanguageChange = (event) => {
-    // TODO: 实现语言切换逻辑
   };
 
   return (
@@ -26,7 +22,7 @@ const CodeEditor = ({ code, onChange, onSubmit, language }) => {
           <Select
             value={language}
             label="编程语言"
-            onChange={handleLanguageChange}
+            disabled={submitting}
           >
             {SUPPORTED_LANGUAGES.map((lang) => (
               <MenuItem key={lang.value} value={lang.value}>
@@ -39,9 +35,17 @@ const CodeEditor = ({ code, onChange, onSubmit, language }) => {
           variant="contained"
           color="primary"
           onClick={onSubmit}
-          sx={{ ml: 'auto' }}
+          disabled={submitting}
+          sx={{ ml: 'auto', minWidth: 120 }}
         >
-          运行测试并评估
+          {submitting ? (
+            <>
+              <CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />
+              评测中...
+            </>
+          ) : (
+            '运行测试并评估'
+          )}
         </Button>
       </Box>
       <Box sx={{ flexGrow: 1, border: '1px solid #ccc' }}>
@@ -58,6 +62,7 @@ const CodeEditor = ({ code, onChange, onSubmit, language }) => {
             roundedSelection: false,
             scrollBeyondLastLine: false,
             automaticLayout: true,
+            readOnly: submitting,
           }}
         />
       </Box>

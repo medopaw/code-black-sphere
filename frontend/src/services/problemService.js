@@ -79,4 +79,14 @@ export const removeCandidateTab = async (candidateId, problemId) => {
     console.error('Error removing candidate tab:', error);
     throw error;
   }
+};
+
+export const pollSubmissionStatus = async (submissionId) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/submissions/${submissionId}/status`);
+    return response.data;
+  } catch (error) {
+    console.error('Error polling submission status:', error);
+    throw error;
+  }
 }; 
