@@ -1,30 +1,45 @@
-import axios from 'axios';
+import { request } from './request';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 export const getProblems = async () => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/problems`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching problems:', error);
-    throw error;
-  }
+  const response = await request.get('/api/problems');
+  return response.data;
 };
 
-export const getProblem = async (problemId) => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/problems/${problemId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching problem:', error);
-    throw error;
-  }
+export const getProblem = async (id) => {
+  const response = await request.get(`/api/problems/${id}`);
+  return response.data;
+};
+
+export const createProblem = async (problem) => {
+  const response = await request.post('/api/problems', problem);
+  return response.data;
+};
+
+export const updateProblem = async (id, problem) => {
+  const response = await request.put(`/api/problems/${id}`, problem);
+  return response.data;
+};
+
+export const deleteProblem = async (id) => {
+  const response = await request.delete(`/api/problems/${id}`);
+  return response.data;
+};
+
+export const importProblems = async () => {
+  const response = await request.post('/api/problems/import');
+  return response.data;
+};
+
+export const exportProblems = async (problems) => {
+  const response = await request.post('/api/problems/export', { problems });
+  return response.data;
 };
 
 export const submitCode = async (candidateId, problemId, code, language) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/submissions`, {
+    const response = await request.post('/api/submissions', {
       candidate_id: candidateId,
       problem_id: problemId,
       code,
@@ -39,7 +54,7 @@ export const submitCode = async (candidateId, problemId, code, language) => {
 
 export const getSubmission = async (submissionId) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/submissions/${submissionId}`);
+    const response = await request.get(`/api/submissions/${submissionId}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching submission:', error);
@@ -49,7 +64,7 @@ export const getSubmission = async (submissionId) => {
 
 export const getCandidateTabs = async (candidateId) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/candidates/${candidateId}/tabs`);
+    const response = await request.get(`/api/candidates/${candidateId}/tabs`);
     return response.data;
   } catch (error) {
     console.error('Error fetching candidate tabs:', error);
@@ -59,7 +74,7 @@ export const getCandidateTabs = async (candidateId) => {
 
 export const addCandidateTab = async (candidateId, problemId) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/candidates/${candidateId}/tabs`, {
+    const response = await request.post(`/api/candidates/${candidateId}/tabs`, {
       problem_id: problemId,
     });
     return response.data;
@@ -71,9 +86,7 @@ export const addCandidateTab = async (candidateId, problemId) => {
 
 export const removeCandidateTab = async (candidateId, problemId) => {
   try {
-    const response = await axios.delete(
-      `${API_BASE_URL}/candidates/${candidateId}/tabs/${problemId}`
-    );
+    const response = await request.delete(`/api/candidates/${candidateId}/tabs/${problemId}`);
     return response.data;
   } catch (error) {
     console.error('Error removing candidate tab:', error);
@@ -83,7 +96,7 @@ export const removeCandidateTab = async (candidateId, problemId) => {
 
 export const pollSubmissionStatus = async (submissionId) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/submissions/${submissionId}/status`);
+    const response = await request.get(`/api/submissions/${submissionId}/status`);
     return response.data;
   } catch (error) {
     console.error('Error polling submission status:', error);

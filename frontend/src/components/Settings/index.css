@@ -1,0 +1,37 @@
+.settings {
+  padding: 24px;
+}
+
+.setting-card {
+  margin-bottom: 24px;
+}
+
+.setting-card:last-child {
+  margin-bottom: 0;
+}
+
+.setting-card .ant-card-head {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.setting-card .ant-card-body {
+  padding: 24px;
+}
+
+.setting-card .ant-table {
+  margin-top: 16px;
+}
+
+.setting-card .ant-space {
+  margin-bottom: 16px;
+}
+
+.setting-card .ant-select {
+  width: 100%;
+  max-width: 300px;
+}
+
+.setting-card .ant-input-password {
+  width: 100%;
+  max-width: 300px;
+} 
