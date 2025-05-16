@@ -9,13 +9,6 @@ const DIFFICULTY_LEVELS = [
   { value: 'hard', label: '困难' }
 ];
 
-const CATEGORIES = [
-  { value: 'algorithm', label: '算法' },
-  { value: 'data-structure', label: '数据结构' },
-  { value: 'system-design', label: '系统设计' },
-  { value: 'database', label: '数据库' },
-  { value: 'network', label: '网络' }
-];
 
 const BasicInfoEditor = ({ problem, onChange }) => {
   const handleChange = (field, value) => {
@@ -50,20 +43,6 @@ const BasicInfoEditor = ({ problem, onChange }) => {
         </Select>
       </Form.Item>
 
-      <Form.Item label="分类">
-        <Select
-          mode="multiple"
-          value={problem.categories}
-          onChange={(value) => handleChange('categories', value)}
-          placeholder="请选择分类"
-        >
-          {CATEGORIES.map(category => (
-            <Option key={category.value} value={category.value}>
-              {category.label}
-            </Option>
-          ))}
-        </Select>
-      </Form.Item>
     </Form>
   );
 };
